@@ -40,3 +40,5 @@ next-env.d.ts
 
 certificates"node_modules/" 
 ".vscode/" 
+"node_modules/" 
+".vscode/" 
