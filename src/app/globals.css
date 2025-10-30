@@ -1,0 +1,120 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer components {
+  .pictosso-input {
+    @apply flex h-12 relative rounded-[20px] bg-black/[0.01] border border-black/[0.07] px-5 text-sm font-medium text-black outline-none;
+  }
+}
+
+@layer utilities {
+  /* Chrome, Safari and Opera */
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+
+  .no-scrollbar {
+    -ms-overflow-style: none; /* IE and Edge */
+    scrollbar-width: none; /* Firefox */
+  }
+}
+
+
+@layer base {
+  input[type="number"]::-webkit-inner-spin-button,
+  input[type="number"]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+}
+
+html,
+body,
+#root {
+  width: 100%;
+  min-height: 100%;
+  margin: 0;
+  padding: 0;
+  /* overflow: hidden; */
+}
+
+.simple-popover {
+z-index: 9999999999999999999999 !important;  
+}
+
+/* tooltips */
+#tooltip {
+  z-index: 9999999999999999999999 !important;  
+  border-radius: 0.25rem;
+  padding: 0.5rem;
+  font-weight: 500;
+  font-size: 0.8rem;
+}
+:root {
+  --rt-color-dark: #000000 !important;
+}
+
+
+
+.MuiCollapse-container {
+  transition-duration:1s!important
+}
+
+
+/* ::-webkit-scrollbar {
+  display: none;
+} */
+
+reach-portal {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+}
+
+
+.react-transform-component {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+img,
+video {
+  max-width: unset;
+  height: unset;
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator {
+  display: none;
+}
+
+
+.MuiDateCalendar-root .Mui-selected {
+  background-image: linear-gradient(to bottom right, #d400ff, #8000ff);
+  border-radius: 0.6rem;
+}
+
+.MuiButtonBase-root.MuiPickersDay-root.MuiPickersDay-dayWithMargin,
+.MuiPickersMonth-monthButton,
+.MuiPickersYear-yearButton:hover {
+  border-radius: 0.6rem;
+}
+
+
+
+.tiptap p.is-editor-empty:first-child::before {
+  text-align: center;
+  width: 100%;
+  color: #adb5bd;
+  content: attr(data-placeholder);
+  float: left;
+  height: 0;
+  pointer-events: none;
+}

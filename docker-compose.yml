@@ -1,0 +1,32 @@
+version: '3.8'
+
+services:
+  webapp:
+    build: 
+      context: .
+      args:
+        - NEXT_PUBLIC_STRIPE_SECRET_WEBHOOK_KEY=${NEXT_PUBLIC_STRIPE_SECRET_WEBHOOK_KEY}
+        - NEXT_PUBLIC_STRIPE_SECRET_KEY=${NEXT_PUBLIC_STRIPE_SECRET_KEY}
+
+    ports:
+      - "5252:3000"
+    environment:
+      - NODE_ENV=production
+      - NEXT_PUBLIC_STRIPE_SECRET_WEBHOOK_KEY=${STRIPE_SECRET_WEBHOOK_KEY}
+      - NEXT_PUBLIC_STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY}
+    volumes:
+      # Required to sync file changes.
+      - .:/usr/src/app
+      # Required to not break node modules.
+      - /usr/src/app/node_modules
+      # Required for next to do it's thing.
+      - /usr/src/app/.next
+  stripe:
+      image: "stripe/stripe-cli:latest"
+      network_mode: host
+      environment:
+          STRIPE_SECRET_WEBHOOK_KEY: ${STRIPE_SECRET_WEBHOOK_KEY}
+          # STRIPE_API_KEY: ${STRIPE_SECRET_KEY}
+          STRIPE_DEVICE_NAME: ${STRIPE_DEVICE_NAME}
+      command:
+          listen --api-key ${STRIPE_SECRET_KEY=} --forward-to ${WEBSITE_BASE_URL}/api/stripe/webhooks

@@ -1,0 +1,19 @@
+<svg width="1920" height="1453" viewBox="0 0 1920 1453" fill="none"
+    xmlns="http://www.w3.org/2000/svg">
+    <mask id="path-1-outside-1_1_1421" maskUnits="userSpaceOnUse" x="0" y="0" width="1920"
+        height="1453" fill="black">
+        <rect fill="white" width="1920" height="1453" />
+        <path d="M0 16H1920V1453H0V16Z" />
+    </mask>
+    <path d="M0 16H1920V1453H0V16Z" fill="url(#paint0_linear_1_1421)" />
+    <path d="M0 32H1920V0H0V32Z" fill="white" fill-opacity="0.5" style="mix-blend-mode:soft-light"
+        mask="url(#path-1-outside-1_1_1421)" />
+    <defs>
+        <linearGradient id="paint0_linear_1_1421" x1="960" y1="16" x2="960" y2="1453"
+            gradientUnits="userSpaceOnUse">
+            <stop stop-color="#0B0826" />
+            <stop offset="1" stop-color="#211C45" />
+        </linearGradient>
+    </defs>
+</svg>
+    

@@ -1,0 +1,16 @@
+<svg width="1920" height="148" viewBox="0 0 1920 148" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <mask id="path-1-inside-1_1_264" fill="white">
+        <path d="M0 0H1920V148H0V0Z" />
+    </mask>
+    <path d="M0 0H1920V148H0V0Z" fill="url(#paint0_linear_1_264)" style="mix-blend-mode:soft-light" />
+    <path d="M0 2H1920V-2H0V2ZM1920 146H0V150H1920V146Z" fill="white" fill-opacity="0.5"
+        style="mix-blend-mode:soft-light" mask="url(#path-1-inside-1_1_264)" />
+    <defs>
+        <linearGradient id="paint0_linear_1_264" x1="960" y1="0" x2="960" y2="148"
+            gradientUnits="userSpaceOnUse">
+            <stop stop-color="white" stop-opacity="0.75" />
+            <stop offset="1" stop-color="white" stop-opacity="0.25" />
+        </linearGradient>
+    </defs>
+</svg>
+    
