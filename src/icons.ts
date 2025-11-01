@@ -16,8 +16,11 @@ export const AddIcon: IIcon = {
 
 let icon_id = 0;
 
-export const startIcon: IIcon = { id: (icon_id++).toString(), width: 15, height: 15, source: "local", path: 'pictosso/Start.svg', name: 'Love', size: 1, color: defaultColor };
-export const endIcon: IIcon = { id: (icon_id++).toString(), width: 45, height: 15, source: "local", path: 'pictosso/End.svg', name: 'Love', size: 1, color: defaultColor };
+// Black circle SVG path
+const blackCirclePath = '<circle cx="7.5" cy="7.5" r="7.5" fill="black"/>';
+
+export const startIcon: IIcon = { id: (icon_id++).toString(), width: 15, height: 15, source: "path", path: blackCirclePath, name: 'Start', size: 1, color: defaultColor };
+export const endIcon: IIcon = { id: (icon_id++).toString(), width: 15, height: 15, source: "path", path: blackCirclePath, name: 'End', size: 1, color: defaultColor };
 export const signature: IIcon = { id: (icon_id++).toString(), width: 50 * 2, height: 12 * 2, source: "local", path: 'pictosso/signature.svg', name: 'Signature', size: 1, color: defaultColor };
 
 export const icons: IIcon[] = [

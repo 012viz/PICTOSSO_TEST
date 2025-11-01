@@ -4,23 +4,61 @@ import ProjectHeader from "@/components/ProjectHeader";
 import ProjectEditor from "./ProjectEditor";
 import ProjectPreview from "./ProjectPreview";
 import { checkoutSteps, mainSteps } from "./StepPicker";
-import { activeStep, mobileMenuOpen } from "@/signals";
+import { activeStep, mobileMenuOpen, selectedPeriodType, mainIcon, startDate, endDate } from "@/signals";
 import Checkout from "./Checkout";
 import BottomProjectPreview from "./BottomProjectPreview";
 import { getPictoFrameSvgBlob } from "./RenderPictoFrame";
 import { useMediaQuery } from "usehooks-ts";
 import { device } from "../media-queries";
 import { Modal, Box, IconButton } from "@mui/material";
+import dynamic from "next/dynamic";
 
 import React from "react";
 
+// Import ProjectChoice component
+const ProjectChoice = dynamic(() => import("./ProjectChoice"), { ssr: false });
+
 const Project = () => {
     const isMobile = useMediaQuery(device.xs);
-    const [showModal, setShowModal] = React.useState(isMobile);
+    const [showModal, setShowModal] = React.useState(false);
+    const [showProjectChoice, setShowProjectChoice] = React.useState(true);
+    const [mounted, setMounted] = React.useState(false);
+
+    React.useEffect(() => {
+        setMounted(true);
+        if (isMobile) {
+            setShowModal(true);
+        }
+    }, [isMobile]);
 
     const handleClose = () => {
         setShowModal(false);
     };
+
+    const handleChoiceComplete = () => {
+        // Ensure all required signals are set before proceeding
+        console.log('Validating signals before showing editor...');
+        console.log('selectedPeriodType:', selectedPeriodType.value);
+        console.log('mainIcon:', mainIcon.value);
+        console.log('startDate:', startDate.value);
+        console.log('endDate:', endDate.value);
+        
+        // Only proceed if essential signals are set
+        if (selectedPeriodType.value && mainIcon.value && startDate.value && endDate.value) {
+            setShowProjectChoice(false);
+        } else {
+            console.error('Missing required signals!');
+        }
+    };
+
+    if (!mounted) {
+        return null;
+    }
+
+    // Show project choice screen (manual or AI)
+    if (showProjectChoice) {
+        return <ProjectChoice onComplete={handleChoiceComplete} />;
+    }
 
     return (
         <>

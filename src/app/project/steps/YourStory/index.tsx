@@ -1,9 +1,12 @@
 "use client"
 
 import * as React from "react";
+import dynamic from "next/dynamic";
 import DateField from "./DateField";
-import DetailLevel from "./DetailLevel";
-import TotalIcons from "./TotalIcons";
+
+// Dynamic imports to prevent hydration issues with period type selector
+const DetailLevel = dynamic(() => import("./DetailLevel"), { ssr: false });
+const TotalIcons = dynamic(() => import("./TotalIcons"), { ssr: false });
 import { SvgRenderer } from "@/components/SvgRenderer";
 import { activeStep, endDate, mainIcon, selectedPeriodType, startDate } from "@/signals";
 import IconPicker from "../../IconPicker";

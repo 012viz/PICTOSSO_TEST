@@ -74,13 +74,19 @@ const scales = {
 
 }
 const ARModelViewer = (props: { static: boolean, showARMessage?: boolean, downloadButton?: boolean, autoRotate?: boolean }) => {
-    const [key, setKey] = useState(Math.random())
+    // Avoid non-deterministic initial value during SSR/hydration.
+    // Initialize to a stable value and set a random key on the client in an effect.
+    const [key, setKey] = useState(0)
     const modelRef = useRef<ModelViewer | undefined>();
     const [supportsAR, setSupportsAr] = useState(true);
     const scale = scales[(selectedProduct.value?.name || "Small") as keyof typeof scales]
 
 
-    useEffect(() => { import('@google/model-viewer').catch(console.error); }, []);
+    useEffect(() => { 
+        import('@google/model-viewer').catch(console.error);
+        // assign a random key after client mount to avoid SSR/client mismatch
+        setKey(Math.random());
+    }, []);
 
 
     useEffect(() => {

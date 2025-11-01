@@ -2,40 +2,20 @@
 
 import { v4 as uuid } from 'uuid';
 import DateField from "../YourStory/DateField";
-import { useSignals } from "@preact/signals-react/runtime";
 import { ILifeEvent, IPeriodType, PeriodType, Steps } from "@/types";
 import { activeStep, computedProject, endDate, highlightedLifeEvent, lifeEvents, mainIcon, selectedPeriodType, startDate } from "@/signals";
 import PurpleButton from "@/components/PurpleButton";
 import { SvgRenderer } from "@/components/SvgRenderer";
-import { FC, useLayoutEffect, useState } from "react";
+import { FC, useState, useEffect } from "react";
 import { CustomButton, CustomButtonGroup } from "@/components/Buttons";
 import { useControls, useTransformContext, useTransformInit } from "react-zoom-pan-pinch";
 import { zoomToElement } from "../../ProjectPreview";
 import IconPicker, { iconPickerStep } from '../../IconPicker';
-import { useEffect } from '@preact-signals/safe-react/react';
 import { handleButtonClick } from '@/utils';
 
 export const LifeEvent: React.FC<{ event: ILifeEvent, showActions: boolean }> = ({ event, showActions }) => {
-
     const [pickerOpen, setPickerOpen] = useState(false);
     const [errorMessage, setErrorMessage] = useState("");
-
-    useLayoutEffect(() => {
-        setTimeout(() => {
-            const matches = lifeEvents.value.filter(e => e.date === event.date && e.id !== event.id);
-            const eventDate = new Date(event.date);
-            const storyStartDate = new Date(startDate.value);
-            const storyEndDate = new Date(endDate.value);
-            const isOutOfRange = eventDate < storyStartDate || eventDate > storyEndDate;
-            if (matches.length > 0) {
-                return setErrorMessage("Another event with the same date exists.");
-            }
-            if (isOutOfRange) {
-                return setErrorMessage("Event date is out of the story date range.");
-            }
-            return setErrorMessage("");
-        }, 400);
-    }, [event.date, event.id, pickerOpen, lifeEvents.value])
 
 
     return (
@@ -156,11 +136,7 @@ const addLifeEvent = () => {
 
 
 
-const LifeEvents = () => {
-    // useSignals();
-
-
-
+const LifeEvents: FC = () => {
     return (
         <div className="flex flex-col gap-0 px-8 md:px-12 h-[calc(100%)]">
             <p className="text-center text-xl font-bold text-black mb-8 mt-2">Add your Life events</p>
@@ -175,7 +151,7 @@ const LifeEvents = () => {
             </div>
 
             {
-                lifeEvents.value.map(le => <LifeEvent key={`${le.id}`} event={le} showActions={true} />)
+                lifeEvents.value.map(le => <LifeEvent key={`${le.id}_${le.icon.id}`} event={le} showActions={true} />)
             }
 
             <div onClick={addLifeEvent} className="w-full flex mt-8 items-center h-14 cursor-pointer">

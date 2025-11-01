@@ -135,6 +135,7 @@ const getMonthsBetweenDates = (date1: Date, date2: Date): number => {
 
 const getYearsBetweenDates = (date1: Date, date2: Date): number => {
     const yearsDifference = date2.getFullYear() - date1.getFullYear();
+    console.log("[getYearsBetweenDates]", date1.getFullYear(), "to", date2.getFullYear(), "=", yearsDifference);
     // // Check if date2 has not reached its anniversary in the current year
     // if (
     //     date2.getMonth() < date1.getMonth() ||
@@ -156,12 +157,8 @@ const calculateRowsColumns = (iconCount: number, ratio_width: number = 50, ratio
 
     let cols = Math.ceil(Math.sqrt(iconCount * aspectRatio));
     let rows = Math.ceil(iconCount / cols);
-    let total = Math.ceil(rows / 2) * (cols - 1) + Math.floor(rows / 2) * cols
-    let remainder = iconCount - total;
-    if (remainder < 0) {
-        rows -= 1;
-        remainder = remainder + cols;
-    }
+    let remainder = iconCount % cols;
+    
     return { cols, rows, remainder };
 
 }
@@ -357,101 +354,137 @@ export const getIconCount = () => {
     const totalUserIcons = totalIcons == 0 ? 0 : totalIcons - 2;
     return totalUserIcons;
 }
+
+// Function to calculate average color from icons
+const calculateAverageColor = (icons: IIcon[]): string => {
+    if (icons.length === 0) return "#000000";
+    
+    let totalR = 0, totalG = 0, totalB = 0;
+    let validColors = 0;
+    
+    icons.forEach(icon => {
+        // Try to get color from icon.color property
+        if (icon.color && icon.color !== "unset" && icon.color !== "currentColor") {
+            const hex = icon.color.replace('#', '');
+            if (hex.length === 6) {
+                const r = parseInt(hex.substring(0, 2), 16);
+                const g = parseInt(hex.substring(2, 4), 16);
+                const b = parseInt(hex.substring(4, 6), 16);
+                
+                if (!isNaN(r) && !isNaN(g) && !isNaN(b)) {
+                    totalR += r;
+                    totalG += g;
+                    totalB += b;
+                    validColors++;
+                }
+            }
+        }
+        // For iconify emojis, extract color from the path/name
+        else if (icon.source === "iconify" && icon.path) {
+            const path = icon.path.toLowerCase();
+            let r = 80, g = 80, b = 80; // Default dark gray
+            
+            // Parse the emoji ID for color hints (e.g., "noto:red-heart")
+            if (path.includes('red') || path.includes('heart') || path.includes('love')) {
+                r = 239; g = 68; b = 68; // Red
+            } else if (path.includes('blue') || path.includes('water') || path.includes('ocean')) {
+                r = 59; g = 130; b = 246; // Blue
+            } else if (path.includes('green') || path.includes('plant') || path.includes('leaf') || path.includes('tree')) {
+                r = 34; g = 197; b = 94; // Green
+            } else if (path.includes('yellow') || path.includes('sun') || path.includes('star')) {
+                r = 250; g = 204; b = 21; // Yellow
+            } else if (path.includes('purple') || path.includes('violet') || path.includes('grape')) {
+                r = 168; g = 85; b = 247; // Purple
+            } else if (path.includes('orange') || path.includes('fire') || path.includes('flame')) {
+                r = 249; g = 115; b = 22; // Orange
+            } else if (path.includes('pink') || path.includes('blossom') || path.includes('cherry')) {
+                r = 244; g = 114; b = 182; // Pink
+            } else if (path.includes('brown') || path.includes('wood')) {
+                r = 120; g = 80; b = 50; // Brown
+            } else if (path.includes('white') || path.includes('cloud')) {
+                r = 240; g = 240; b = 240; // Light gray
+            } else if (path.includes('black') || path.includes('night')) {
+                r = 40; g = 40; b = 40; // Dark gray
+            }
+            
+            totalR += r;
+            totalG += g;
+            totalB += b;
+            validColors++;
+        }
+    });
+    
+    // If no colors found, return elegant dark gray
+    if (validColors === 0) return "#505050";
+    
+    const avgR = Math.round(totalR / validColors);
+    const avgG = Math.round(totalG / validColors);
+    const avgB = Math.round(totalB / validColors);
+    
+    return `#${avgR.toString(16).padStart(2, '0')}${avgG.toString(16).padStart(2, '0')}${avgB.toString(16).padStart(2, '0')}`;
+};
+
 export const computeProject: (projectInput: IComputeProject) => IComputeProjectOut | null = (projectInput) => {
-    const { titles, startDate, endDate, periodType, frameWidth, frameHeight, mainIcon, lifeEvents } = projectInput;
+    let { titles, startDate, endDate, periodType, frameWidth, frameHeight, mainIcon, lifeEvents } = projectInput;
     const _startDate = new Date(startDate);
     const _endDate = new Date(endDate);
+    
+    // Normalize old localStorage values (migration from YEAR/MONTH/DAY to years/months/days)
+    if (periodType === "YEAR" as any) periodType = PeriodType.YEAR;
+    if (periodType === "MONTH" as any) periodType = PeriodType.MONTH;
+    if (periodType === "DAY" as any) periodType = PeriodType.DAY;
 
     let iconCount = 0;
+    console.log("[computeProject] periodType check:", periodType, "===", PeriodType.YEAR, "?", periodType === PeriodType.YEAR);
+    console.log("[computeProject] periodType check:", periodType, "===", PeriodType.MONTH, "?", periodType === PeriodType.MONTH);
+    console.log("[computeProject] periodType check:", periodType, "===", PeriodType.DAY, "?", periodType === PeriodType.DAY);
+    
     if (periodType == PeriodType.DAY) {
+        console.log("[computeProject] Calling getDaysBetweenDates");
         iconCount = getDaysBetweenDates(_startDate, _endDate);
     } else if (periodType == PeriodType.MONTH) {
+        console.log("[computeProject] Calling getMonthsBetweenDates");
         iconCount = getMonthsBetweenDates(_startDate, _endDate);
     } else if (periodType == PeriodType.YEAR) {
+        console.log("[computeProject] Calling getYearsBetweenDates");
         iconCount = getYearsBetweenDates(_startDate, _endDate);
+    } else {
+        console.log("[computeProject] ⚠️ NO MATCH for periodType:", periodType);
     }
-    console.log("ICONCOUNT", iconCount)
+    console.log("[computeProject] Initial iconCount:", iconCount, "periodType:", periodType, "dates:", _startDate, _endDate)
     // Add 1 to include the start icon month
     iconCount += 2;
-    // console.log("ICONCOUNT", iconCount);
+    console.log("[computeProject] After +2, iconCount:", iconCount);
 
-    let isQuincunx = false;
+    // Ensure we have at least the minimum number of icons (need at least 2)
+    if (iconCount < 2) {
+        console.warn("[computeProject] ❌ Not enough icons, returning null");
+        return null;
+    }
+
     const titleConfig = getTitleConfig(titles);
     let iconsHeight = frameHeight - titleConfig.height;
-    let { cols, rows, remainder } = calculateRowsColumns(iconCount, frameWidth, iconsHeight);
+    
+    // Calculate for middle icons only (iconCount - 2 because we exclude start and end icons)
+    const middleIconCount = Math.max(0, iconCount - 2);
+    let { cols, rows, remainder } = calculateRowsColumns(middleIconCount, frameWidth, iconsHeight);
     const width = cols * (icon_width + margin) - margin;
     let height = (width * frameHeight) / frameWidth;
 
-    let index = 0;
     let pictos: IPictoPos[] = [];
     let marginV = margin;
-    if (remainder > 0 && titleConfig.height <= 0 && titles.position.y == "bottom") {
-        marginV -= marginV * 0.2;
-    }
-
-    // Main icon placement logic
+    
+    // Collect middle icons first to calculate average color
+    let middleIcons: IIcon[] = [];
+    let index = 1; // Start at 1 because index 0 is the startIcon
     for (let i = 0; i < rows; i++) {
-        isQuincunx = i % 2 !== 0;
-        for (let j = 0; j < (cols - (isQuincunx ? 0 : 1)); j++) {
-            const x = j * (icon_width + margin) + (isQuincunx ? 0 : (icon_width + margin) / 2);
-            const y = i * (icon_height + marginV);
+        for (let j = 0; j < cols; j++) {
+            // Stop if we've placed all middle icons
+            if (index >= iconCount - 1) break; // -1 because we need to reserve space for endIcon
+            
             let icon: IIcon = mainIcon;
             let matchingLE = null;
-            // // add first icon
-            if (index == 0)
-                matchingLE = { leId: startIcon.id, width: icon_width, height: icon_height, x, y, icon: startIcon };
-            else if (periodType == PeriodType.MONTH)
-                matchingLE = lifeEvents.find(le => getMonthsBetweenDates(new Date(startDate), new Date(le.date)) === index - 1);
-            else if (periodType == PeriodType.DAY)
-                matchingLE = lifeEvents.find(le => getDaysBetweenDates(new Date(startDate), new Date(le.date)) === index - 1);
-            else if (periodType == PeriodType.YEAR)
-                matchingLE = lifeEvents.find(le => getYearsBetweenDates(new Date(startDate), new Date(le.date)) === index - 1);
-
-            if (matchingLE)
-                icon = matchingLE.icon;
-
-            // console.log("ICONCOUNT", `${index} / ${iconCount}`)
-
-
-            pictos.push({ leId: matchingLE?.id, width: icon_width, height: icon_height, x, y, icon });
-            index++;
-        }
-    }
-
-    // Remaining icons if any
-    // console.log(`INDEX: ${index} | REMAINDER : ${remainder} | NEW REMAINDER : ${iconCount - index} | TOTAL : ${iconCount}`)
-    const endIconWidthScaleX = 3;
-    // remainder = iconCount - index;
-    const newRemainder = iconCount - index;
-
-    // if no remainder add endicon centered on new line
-    if (remainder <= 0) {
-        let offset = ((cols - remainder - 1) / 2) * (icon_width + margin);
-        const x = (remainder - 0.5) * (icon_width + margin) + offset;
-        const y = rows * (icon_height + marginV);
-
-        pictos.push({ width: icon_width * endIconWidthScaleX, height: icon_height, x, y, icon: endIcon });
-
-    }
-    // if remainder try to add add endicon next to remainder
-    else {
-        let offset = ((cols - remainder + 1 - (isQuincunx ? 0 : 1)) / 2) * (icon_width + margin);
-
-        // if the remainder line has space for the endIcon on the same line, adjust the spacing
-        const remainderLineHasSpaceForEndIcon = remainder + endIconWidthScaleX <= cols;
-        console.log("remainderLineHasSpaceForEndIcon", remainderLineHasSpaceForEndIcon, remainder)
-        if (remainderLineHasSpaceForEndIcon) {
-            offset = offset - (icon_width + margin) * endIconWidthScaleX / 2;
-        }
-        let j = 0;
-        // for (let j = 0; j <= remainder; j++) {
-        let x = 0;
-        while (index < iconCount) {
-            x = j * (icon_width + margin) + offset;
-            const y = rows * (icon_height + marginV);
-            let icon: IIcon = mainIcon;
-            let matchingLE = null;
-
+            
             if (periodType == PeriodType.MONTH)
                 matchingLE = lifeEvents.find(le => getMonthsBetweenDates(new Date(startDate), new Date(le.date)) === index - 1);
             else if (periodType == PeriodType.DAY)
@@ -461,26 +494,84 @@ export const computeProject: (projectInput: IComputeProject) => IComputeProjectO
 
             if (matchingLE)
                 icon = matchingLE.icon;
-            pictos.push({ leId: matchingLE?.id, width: icon_width, height: icon_height, x, y, icon });
-            // console.log("ICONCOUNT", `${index} / ${iconCount}`)
+
+            middleIcons.push(icon);
             index++;
-            j++;
         }
+        if (index >= iconCount - 1) break;
+    }
+    
+    // Calculate average color from middle icons
+    const avgColor = calculateAverageColor(middleIcons);
+    
+    // Create colored start and end icons
+    const coloredStartIcon: IIcon = {
+        ...startIcon,
+        color: avgColor,
+        path: `<circle cx="7.5" cy="7.5" r="7.5" fill="${avgColor}"/>`
+    };
+    
+    const coloredEndIcon: IIcon = {
+        ...endIcon,
+        color: avgColor,
+        path: `<circle cx="7.5" cy="7.5" r="7.5" fill="${avgColor}"/>`
+    };
+    
+    // FIRST LINE: Place start icon (aligned left, 70% size, centered)
+    const startIconSize = icon_width * 0.7;
+    const startOffset = (icon_width - startIconSize) / 2; // Center within the grid cell
+    const startX = startOffset;
+    const startY = startOffset;
+    pictos.push({ 
+        leId: startIcon.id, 
+        width: startIconSize, 
+        height: startIconSize, 
+        x: startX, 
+        y: startY, 
+        icon: coloredStartIcon 
+    });
 
-        if (remainderLineHasSpaceForEndIcon) {
-            x = x + icon_width + margin
-            const y = rows * (icon_height + marginV);
+    // MIDDLE LINES: Place main icons in grid
+    index = 0; // Reset index for actual placement
+    for (let i = 0; i < rows; i++) {
+        for (let j = 0; j < cols; j++) {
+            if (index >= middleIcons.length) break;
+            
+            const x = j * (icon_width + margin);
+            const y = (i + 1) * (icon_height + marginV); // +1 to skip first line
+            
+            const matchingLE = lifeEvents.find(le => {
+                if (periodType == PeriodType.MONTH)
+                    return getMonthsBetweenDates(new Date(startDate), new Date(le.date)) === index;
+                else if (periodType == PeriodType.DAY)
+                    return getDaysBetweenDates(new Date(startDate), new Date(le.date)) === index;
+                else if (periodType == PeriodType.YEAR)
+                    return getYearsBetweenDates(new Date(startDate), new Date(le.date)) === index;
+                return false;
+            });
 
-            pictos.push({ width: icon_width * endIconWidthScaleX, height: icon_height, x, y, icon: endIcon });
-        } else {
-            let offset = ((cols - 2) / 2) * (icon_width + margin);
-            const x = offset;
-            const y = (rows + 1) * (icon_height + marginV);
-
-            // console.log()
-            pictos.push({ width: icon_width * endIconWidthScaleX, height: icon_height, x, y, icon: endIcon });
+            pictos.push({ leId: matchingLE?.id, width: icon_width, height: icon_height, x, y, icon: middleIcons[index] });
+            index++;
         }
+        if (index >= middleIcons.length) break;
+    }
 
+    // LAST LINE: Place 3 end icons (colored dots) aligned left, 70% size, centered
+    const endIconSize = icon_width * 0.7;
+    const endOffset = (icon_width - endIconSize) / 2; // Center within the grid cell
+    const lastMiddleIcon = pictos[pictos.length - 1];
+    const endY = lastMiddleIcon.y + icon_height + marginV + endOffset;
+    
+    // Add 3 colored dots aligned with the grid
+    for (let i = 0; i < 3; i++) {
+        const endX = i * (icon_width + margin) + endOffset;
+        pictos.push({ 
+            width: endIconSize, 
+            height: endIconSize, 
+            x: endX, 
+            y: endY, 
+            icon: coloredEndIcon 
+        });
     }
 
     let pictoHeightPx = height * (frameHeight - titleConfig.height) / frameHeight

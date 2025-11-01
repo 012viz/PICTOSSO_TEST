@@ -57,8 +57,12 @@ export const formatDate = (date: Date, periodType: IPeriodType): string => {
     return parts.join(" ");
 };
 export const getProducts = async () => {
-    console.log("Getting products...", process.env.NEXT_PUBLIC_WEBSITE_BASE_URL);
-    const res = await fetch(`${process.env.NEXT_PUBLIC_WEBSITE_BASE_URL}/api/gelato/products`)
+    console.log("Getting products...");
+    // Use relative URL for API route in the same Next.js app
+    const baseUrl = typeof window !== 'undefined' 
+        ? window.location.origin 
+        : process.env.NEXT_PUBLIC_WEBSITE_BASE_URL || 'http://localhost:3000';
+    const res = await fetch(`${baseUrl}/api/gelato/products`)
     if (!res.ok) {
         // This will activate the closest `error.js` Error Boundary
         throw new Error('Failed to fetch data')

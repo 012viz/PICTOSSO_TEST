@@ -1,9 +1,9 @@
 "use client"
 
 import 'react-tooltip/dist/react-tooltip.css'
+import React from 'react';
+import dynamic from 'next/dynamic';
 import StepPicker, { mainSteps } from "./StepPicker";
-import YourStory from "./steps/YourStory";
-import LifeEvents from "./steps/LifeEvents";
 import TitleLayout from "./steps/TitleLayout";
 import { activeStep, bottomProjectPreviewOpen, frameTextureUri, mobileMenuOpen, selectedProduct, selectedProductDetail } from "@/signals";
 import { Steps } from "@/types";
@@ -12,6 +12,10 @@ import { getPictoFrameSvgBlob } from "./RenderPictoFrame";
 import { Tooltip } from 'react-tooltip'
 import { useEffect } from '@preact-signals/safe-react/react';
 import { fbq } from '../lib/fbq';
+
+// Import these dynamically to avoid DatePicker errors before data is ready
+const YourStory = dynamic(() => import("./steps/YourStory"), { ssr: false });
+const LifeEvents = dynamic(() => import("./steps/LifeEvents"), { ssr: false });
 
 export const CloseIconPicker = (props: { className?: string, onClick: () => void }) => {
     return (
@@ -36,9 +40,19 @@ export const CloseIconPicker = (props: { className?: string, onClick: () => void
 
 const steps = [Steps.YourStory, Steps.LifeEvents, Steps.TitleLayout]
 const ProjectEditor = () => {
+    const [mounted, setMounted] = React.useState(false);
+
     useEffect(() => {
         fbq('track', 'ViewContent');
+        // Delay mount to ensure all signals are ready
+        setTimeout(() => setMounted(true), 0);
     }, [])
+
+    // Wait for client-side hydration to prevent SSR/client mismatch
+    if (!mounted) {
+        return null;
+    }
+
     return (
         <>
             <Tooltip id="tooltip" place="bottom" />

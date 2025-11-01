@@ -15,8 +15,14 @@ import { useMediaQuery } from "usehooks-ts";
 import { device } from "@/app/media-queries";
 
 
-const getDatePickerViews = (periodType: IPeriodType) => {
-    let views: readonly DateView[] = []
+const getDatePickerViews = (periodType: IPeriodType | undefined) => {
+    // Always return at least one view to prevent MUI error
+    let views: readonly DateView[] = ['year', 'month', 'day'] // Default
+    
+    if (!periodType) {
+        return views; // Return default if periodType is undefined
+    }
+    
     if (periodType == PeriodType.DAY)
         views = ['year', 'month', 'day']
     else if (periodType == PeriodType.MONTH)
@@ -28,7 +34,10 @@ const getDatePickerViews = (periodType: IPeriodType) => {
 
 }
 
-const getDatePickerFormat = (periodType: IPeriodType): string => {
+const getDatePickerFormat = (periodType: IPeriodType | undefined): string => {
+    if (!periodType) {
+        return 'YYYY/MM/DD'; // Default format if undefined
+    }
     if (periodType === PeriodType.DAY) {
         return 'YYYY/MM/DD';
     } else if (periodType === PeriodType.MONTH) {
@@ -85,6 +94,18 @@ const DatePickerComponent = (props: { date: Date, onDateChange: Function, text: 
 
     const isMobile = useMediaQuery(device.xs);
 
+    // Don't render if period type is not set - CRITICAL for preventing MUI errors
+    if (!selectedPeriodType.value) {
+        console.log('[DatePicker] selectedPeriodType is not set, skipping render');
+        return null;
+    }
+
+    // Extra safety check
+    const views = getDatePickerViews(selectedPeriodType.value);
+    if (!views || views.length === 0) {
+        console.error('[DatePicker] No valid views calculated, skipping render');
+        return null;
+    }
 
     return (
         <div className="relative w-full">

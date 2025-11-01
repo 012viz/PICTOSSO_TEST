@@ -24,6 +24,20 @@ effect(async () => {
 
 export const selectedPeriodType = persistSignal<IPeriodType>('selectedPeriodType', stateVersion, PeriodType.MONTH);
 
+// Normalize old localStorage values (migration from YEAR/MONTH/DAY to years/months/days)
+effect(() => {
+    if (typeof window === 'undefined') return;
+    
+    const currentValue = selectedPeriodType.value as any;
+    if (currentValue === "YEAR") {
+        selectedPeriodType.value = PeriodType.YEAR;
+    } else if (currentValue === "MONTH") {
+        selectedPeriodType.value = PeriodType.MONTH;
+    } else if (currentValue === "DAY") {
+        selectedPeriodType.value = PeriodType.DAY;
+    }
+});
+
 export const activeStep = signal<Steps>(Steps.YourStory);
 
 export const mobileMenuOpen = signal<boolean>(false);

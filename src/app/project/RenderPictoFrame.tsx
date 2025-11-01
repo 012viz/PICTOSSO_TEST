@@ -3,13 +3,14 @@
 import { Ref, RefObject, forwardRef, useRef, useState } from "react";
 import { IComputeProject, computeProject, spaceBetweenLinesSmall, spaceBetweenLinesXl, spaceBetweenTextAndPictos, spaceBetweenTitleAndSubtitles } from "./ProjectPreview";
 import styled from "styled-components";
-import { IIcon, IPictoPos } from "@/types";
+import { IIcon, IPictoPos, IPeriodType, PeriodType } from "@/types";
 import { loadSvgComponent } from "@/components/SvgRenderer";
-import { computedProject, highlightedLifeEvent, selectedProduct, selectedProductDetail } from "@/signals";
+import { computedProject, highlightedLifeEvent, selectedProduct, selectedProductDetail, startDate, selectedPeriodType } from "@/signals";
 import { useEffect } from "@preact-signals/safe-react/react";
 import { useMediaQuery } from "usehooks-ts";
 import { device } from "../media-queries";
 import { signature } from "@/icons";
+import { formatDate } from "@/utils";
 import React from "react";
 
 
@@ -120,6 +121,7 @@ export const RenderPictoFrame = (props: IComputeProject) => {
     const combinedSvgRef = useRef<HTMLDivElement>(null);
     const isMobile = useMediaQuery(device.xs);
     const [computed, setComputed] = useState(() => computeProject(props));
+    const [hoveredIcon, setHoveredIcon] = useState<{ date: string; x: number; y: number } | null>(null);
 
     useEffect(() => {
         const newComputed = computeProject(props);
@@ -140,9 +142,21 @@ export const RenderPictoFrame = (props: IComputeProject) => {
 
     // computedProject.value = computeProject(props);
     if (!computed || typeof document === 'undefined') {
-        return <h1>unable to compute project</h1>;
+        console.log("[RenderPictoFrame] ⏳ Waiting: !computed or !document");
+        return null;
     }
-    if (!computedProject.value || typeof document == 'undefined') return <h1>unable to compute project</h1>
+    if (!computedProject.value || typeof document == 'undefined') {
+        console.log("[RenderPictoFrame] ⏳ Waiting: !computedProject.value");
+        return null;
+    }
+    
+    // Wait for valid dimensions (signals loading from localStorage)
+    if (computedProject.value.width <= 0 || computedProject.value.height <= 0) {
+        console.log("[RenderPictoFrame] ⏳ Waiting: invalid dimensions", computedProject.value.width, computedProject.value.height);
+        return null;
+    }
+    
+    console.log("[RenderPictoFrame] ✅ Rendering with valid dimensions:", computedProject.value.width, "x", computedProject.value.height);
 
     function calculateFontSize(desiredHeight: number, fontFamily = 'Arial', fontWeight = '100') {
         // Create a temporary SVG element
@@ -341,7 +355,29 @@ export const RenderPictoFrame = (props: IComputeProject) => {
                                     alignmentBaseline="baseline">
                                     {computedProject.value.pictos.map((item, index) => {
                                         const isHighlighted = highlightedLifeEvent.value && item?.leId == highlightedLifeEvent.value?.id;
-                                        const key = `${item.icon.id}_${item.x}_${item.y}`
+                                        const key = `${item.icon.id}_${item.x}_${item.y}`;
+                                        
+                                        // Calculate the date for this icon (skip first and last 3 icons)
+                                        const isStartIcon = index === 0;
+                                        const isEndIcon = computedProject.value ? index >= computedProject.value.pictos.length - 3 : false;
+                                        let iconDate = null;
+                                        
+                                        if (!isStartIcon && !isEndIcon && startDate.value) {
+                                            const baseDate = new Date(startDate.value);
+                                            const iconIndex = index - 1; // Subtract 1 for start icon
+                                            
+                                            if (selectedPeriodType.value === PeriodType.DAY) {
+                                                iconDate = new Date(baseDate);
+                                                iconDate.setDate(baseDate.getDate() + iconIndex);
+                                            } else if (selectedPeriodType.value === PeriodType.MONTH) {
+                                                iconDate = new Date(baseDate);
+                                                iconDate.setMonth(baseDate.getMonth() + iconIndex);
+                                            } else if (selectedPeriodType.value === PeriodType.YEAR) {
+                                                iconDate = new Date(baseDate);
+                                                iconDate.setFullYear(baseDate.getFullYear() + iconIndex);
+                                            }
+                                        }
+                                        
                                         return isHighlighted ? <HighlightedPicto
                                             key={key}
                                             scale={1.5}
@@ -354,15 +390,25 @@ export const RenderPictoFrame = (props: IComputeProject) => {
                                                 key={key}
                                                 id={item?.leId}
                                                 fill={item.icon.color}
-                                                width={item.width * item.icon.size}
-                                                height={item.height * item.icon.size}
+                                                style={{ cursor: iconDate ? 'pointer' : 'default' }}
+                                                onMouseEnter={(e) => {
+                                                    if (iconDate) {
+                                                        const rect = (e.target as SVGElement).getBoundingClientRect();
+                                                        setHoveredIcon({
+                                                            date: formatDate(iconDate, selectedPeriodType.value),
+                                                            x: rect.left + rect.width / 2,
+                                                            y: rect.top
+                                                        });
+                                                    }
+                                                }}
+                                                onMouseLeave={() => setHoveredIcon(null)}
                                             >
                                                 <use
                                                     fill={item.icon.color}
-                                                    width={item.width * item.icon.size}
-                                                    height={item.height * item.icon.size}
-                                                    x={marginWidth + item.x - item.width * (item.icon.size - 1) / 2}
-                                                    y={marginHeight + item.y - item.height * (item.icon.size - 1) / 2}
+                                                    width={item.width}
+                                                    height={item.height}
+                                                    x={marginWidth + item.x}
+                                                    y={marginHeight + item.y}
                                                     href={`#${makePictoId(item.icon)}`} />
                                             </g>
 
@@ -374,15 +420,23 @@ export const RenderPictoFrame = (props: IComputeProject) => {
                                 {(() => {
                                     const signatureWidth = width / 4;
                                     const signatureHeight = signatureWidth * 12 / 50;
-                                    return loadSvgComponent({
-                                        id: "signature",
-                                        fillColor: "#000000",
-                                        icon: signature,
-                                        width: signatureWidth,
-                                        height: signatureHeight,
-                                        x: computedProject.value.width + marginWidth * 1 - signatureWidth,
-                                        y: computedProject.value.height + 1.5 * computedProject.value.height / 16 - signatureHeight,
-                                    })
+                                    const sigX = computedProject.value.width + marginWidth * 1 - signatureWidth;
+                                    const sigY = computedProject.value.height + 1.5 * computedProject.value.height / 16 - signatureHeight;
+                                    const rotationAngle = -10; // Angle de -10 degrés
+                                    
+                                    return (
+                                        <g transform={`rotate(${rotationAngle} ${sigX + signatureWidth / 2} ${sigY + signatureHeight / 2})`}>
+                                            {loadSvgComponent({
+                                                id: "signature",
+                                                fillColor: "#000000",
+                                                icon: signature,
+                                                width: signatureWidth,
+                                                height: signatureHeight,
+                                                x: sigX,
+                                                y: sigY,
+                                            })}
+                                        </g>
+                                    )
                                 })()
                                 }
 
@@ -409,6 +463,30 @@ export const RenderPictoFrame = (props: IComputeProject) => {
                     }
 
                 </div>
+                
+                {/* Tooltip */}
+                {hoveredIcon && (
+                    <div
+                        style={{
+                            position: 'fixed',
+                            left: hoveredIcon.x,
+                            top: hoveredIcon.y - 40,
+                            transform: 'translateX(-50%)',
+                            background: 'rgba(0, 0, 0, 0.9)',
+                            color: 'white',
+                            padding: '6px 12px',
+                            borderRadius: '6px',
+                            fontSize: '13px',
+                            fontWeight: '500',
+                            pointerEvents: 'none',
+                            zIndex: 1000,
+                            whiteSpace: 'nowrap',
+                            boxShadow: '0 2px 8px rgba(0,0,0,0.2)'
+                        }}
+                    >
+                        {hoveredIcon.date}
+                    </div>
+                )}
             </StyledPFContainer >
         </>
 
@@ -433,18 +511,16 @@ const HighlightedPicto = (props: { item: IPictoPos, marginWidth: number, marginH
             style={{ transition: `${speed}s` }}
             id={item?.leId}
             fill={item.icon.color}
-            width={item.width * item.icon.size}
-            height={item.height * item.icon.size}
             transform={`scale(${_scale})`}
             transform-origin={`${marginWidth + item.x + item.width / 2}px ${marginHeight + item.y + item.width / 2}px`}
 
         >
             <use
                 fill={item.icon.color}
-                width={item.width * item.icon.size}
-                height={item.height * item.icon.size}
-                x={marginWidth + item.x - item.width * (item.icon.size - 1) / 2}
-                y={marginHeight + item.y - item.height * (item.icon.size - 1) / 2}
+                width={item.width}
+                height={item.height}
+                x={marginWidth + item.x}
+                y={marginHeight + item.y}
                 href={`#${makePictoId(item.icon)}`} />
         </g>
     )

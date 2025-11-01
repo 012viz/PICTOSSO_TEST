@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useLayoutEffect } from "react";
+import React, { useLayoutEffect, useState } from "react";
 import { useMediaQuery } from "usehooks-ts";
 import { device } from "./media-queries";
 import Footer from "@/components/Footer";
@@ -8,6 +8,9 @@ import Drawer from "@/components/Drawer";
 import Link from "next/link";
 import Neon from "./home/Neon";
 import { handleButtonClick } from "@/utils";
+import dynamic from "next/dynamic";
+
+const AIPictossoChat = dynamic(() => import("./ai-pictosso/AIPictossoChat"), { ssr: false });
 
 
 const Line = (props: { first?: boolean, emoji: string, date: string, title: string, }) => {
@@ -63,9 +66,28 @@ const FirstLine = (props: { emoji: string, title: string, subTitle: React.ReactN
 // TODO: make font size in vw.
 
 const HomePage = (): JSX.Element => {
+    const [showAIChat, setShowAIChat] = useState(false);
 
     return (
         <div className="flex flex-col">
+            {/* AI Chatbot Modal */}
+            {showAIChat && (
+                <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
+                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden relative">
+                        <button
+                            onClick={() => setShowAIChat(false)}
+                            className="absolute top-4 right-4 z-10 bg-gray-200 hover:bg-gray-300 rounded-full p-2 transition-colors"
+                        >
+                            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+                        <div className="overflow-y-auto max-h-[90vh]">
+                            <AIPictossoChat onGenerated={() => setShowAIChat(false)} />
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* <div className="fixed z-[2] top-0 left-0 w-full h-full overflow-hidden">
                 <Neon width={window.innerWidth} height={window.innerHeight} />
@@ -95,10 +117,18 @@ const HomePage = (): JSX.Element => {
                             <Line emoji="/pages/home/emoji-3.svg" date={`March 2016`} title="Our memorable trip" />
                             <Line emoji="/pages/home/emoji-4.svg" date={`July 2018`} title="You said yes" />
                         </div>
-                        <Link onClick={() => handleButtonClick("home_get-now")} href="/project" className="flex p-0 w-[16rem] md:w-[15vw] relative aspect-[3.5] mt-32 mb-8 cursor-pointer md:-ml-4 md:self-start self-center">
-                            <img src="/get_now.svg" className="w-full scale-[1.5] absolute top-0 left-0 -translate-y-[23%]" alt="" />
-                            {/* <img src="/pages/home/get_now.gif" className="w-full scale-[1.5] absolute top-0 left-0 -translate-y-[23%]" alt="" /> */}
-                        </Link>
+                        <div className="flex flex-col md:flex-row gap-4 mt-32 mb-8 md:-ml-4 md:self-start self-center">
+                            <Link onClick={() => handleButtonClick("home_get-now")} href="/project" className="flex p-0 w-[16rem] md:w-[15vw] relative aspect-[3.5] cursor-pointer">
+                                <img src="/get_now.svg" className="w-full scale-[1.5] absolute top-0 left-0 -translate-y-[23%]" alt="" />
+                            </Link>
+                            <button 
+                                onClick={() => setShowAIChat(true)}
+                                className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-bold py-4 px-8 rounded-full shadow-lg transition-all transform hover:scale-105 flex items-center gap-2"
+                            >
+                                <span className="text-2xl">🤖</span>
+                                <span>Générer avec l'IA</span>
+                            </button>
+                        </div>
                     </div>
                 </div>
                 <div className="w-full pr-0 md:pr-[5vw] md:w-2/5 flex items-center mt-8  justify-center">
